@@ -42,65 +42,70 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-private class RetrieveFeedTask extends AsyncTask<Void, Void, String> {
+    private class RetrieveFeedTask extends AsyncTask<Void, Void, String> {
 
-    protected void onPreExecute() {
+        protected void onPreExecute() {
 
-        progressBar.setVisibility(View.VISIBLE);
-        responseView.setText("");
-    }
-
-    protected String doInBackground(Void... urls) {
-
-        try {
-
-            URL url = new URL(API_URL);
-            HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
-            try {
-                BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(urlConnection.getInputStream()));
-                StringBuilder stringBuilder = new StringBuilder();
-                String line;
-                while ((line = bufferedReader.readLine()) != null) {
-                    stringBuilder.append(line).append("\n");
-                }
-                bufferedReader.close();
-                return stringBuilder.toString();
-            } finally {
-                urlConnection.disconnect();
-            }
-        } catch (Exception e) {
-            Log.e("ERROR", e.getMessage(), e);
-            return null;
+            progressBar.setVisibility(View.VISIBLE);
+            responseView.setText("");
         }
-    }
 
-    protected void onPostExecute(String jsonString) {
-        if (jsonString == null) {
-            jsonString = "THERE WAS AN ERROR";
-        }
-        progressBar.setVisibility(View.GONE);
-        Log.i("INFO", jsonString);
-        if (jsonString != null) {
+        protected String doInBackground(Void... urls) {
+
             try {
-                JSONObject jsonObj = new JSONObject(jsonString);
-                String commentText =jsonObj.getString("comment");
-                responseView.setText(commentText);
-            } catch (final JSONException e) {
 
-                String TAG = "JSONDebugging";
-                Log.e(TAG, "Json parsing error: " + e.getMessage());
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        Toast.makeText(getApplicationContext(),
-                                "Json parsing error: " + e.getMessage(),
-                                Toast.LENGTH_LONG)
-                                .show();
+                URL url = new URL(API_URL);
+                HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+                try {
+                    BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(urlConnection.getInputStream()));
+                    StringBuilder stringBuilder = new StringBuilder();
+                    String line;
+                    while ((line = bufferedReader.readLine()) != null) {
+                        stringBuilder.append(line).append("\n");
                     }
-                });
+                    bufferedReader.close();
+                    return stringBuilder.toString();
+                } finally {
+                    urlConnection.disconnect();
+                }
+            } catch (Exception e) {
+                Log.e("ERROR", e.getMessage(), e);
+                return null;
+            }
+        }
+
+        protected void onPostExecute(String jsonString) {
+            progressBar.setVisibility(View.GONE);
+            Log.i("INFO", jsonString);
+            if (jsonString == null) {
+                String errorComment = "Comment not available";
+                responseView.setText(errorComment);
+            }
+            else {
+                try {
+                    JSONObject jsonObj = new JSONObject(jsonString);
+                    String commentText = jsonObj.getString("comment");
+                    String likesText = jsonObj.getString("numberOfLikes");
+                    String articleURL = jsonObj.getString("storyTitle");
+                    responseView.setText(commentText + "\n\n" + likesText + " Likes" + "\n\n" + articleURL);
+                } catch (final JSONException e) {
+
+                    String TAG = "JSONDebugging";
+                    Log.e(TAG, "Json parsing error: " + e.getMessage());
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            Toast.makeText(getApplicationContext(),
+                                    "Json parsing error: " + e.getMessage(),
+                                    Toast.LENGTH_LONG)
+                                    .show();
+                        }
+                    });
+
+                }
+
 
             }
-
-
+        }
     }
-}}}
+}
