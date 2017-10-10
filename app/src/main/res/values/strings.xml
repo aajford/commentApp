@@ -1,3 +1,4 @@
 <resources>
-    <string name="app_name">Comment Reader</string>
+    <string name="app_name">Top Rated Daily Mail Comments</string>
+    <string name="request_button_text">Get Comment</string>
 </resources>

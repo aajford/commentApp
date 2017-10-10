@@ -6,9 +6,12 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -17,11 +20,10 @@ import java.net.URL;
 
 public class MainActivity extends AppCompatActivity {
 
-    EditText emailText;
     TextView responseView;
     ProgressBar progressBar;
-    static final String API_KEY = "USE_YOUR_OWN_API_KEY";
-    static final String API_URL = "https://api.fullcontact.com/v2/person.json?";
+    String API_URL = "https://daily-mail-comment.herokuapp.com/";
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -29,7 +31,6 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         responseView = (TextView) findViewById(R.id.responseView);
-        emailText = (EditText) findViewById(R.id.emailText);
         progressBar = (ProgressBar) findViewById(R.id.progressBar);
 
         Button queryButton = (Button) findViewById(R.id.queryButton);
@@ -41,9 +42,7 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-class RetrieveFeedTask extends AsyncTask<Void, Void, String> {
-
-    private Exception exception;
+private class RetrieveFeedTask extends AsyncTask<Void, Void, String> {
 
     protected void onPreExecute() {
 
@@ -54,7 +53,7 @@ class RetrieveFeedTask extends AsyncTask<Void, Void, String> {
     protected String doInBackground(Void... urls) {
 
         try {
-            String API_URL = "https://daily-mail-comment.herokuapp.com/";
+
             URL url = new URL(API_URL);
             HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
             try {
@@ -66,23 +65,42 @@ class RetrieveFeedTask extends AsyncTask<Void, Void, String> {
                 }
                 bufferedReader.close();
                 return stringBuilder.toString();
-            }
-            finally{
+            } finally {
                 urlConnection.disconnect();
             }
-        }
-        catch(Exception e) {
+        } catch (Exception e) {
             Log.e("ERROR", e.getMessage(), e);
             return null;
         }
     }
 
-    protected void onPostExecute(String response) {
-        if(response == null) {
-            response = "THERE WAS AN ERROR";
+    protected void onPostExecute(String jsonString) {
+        if (jsonString == null) {
+            jsonString = "THERE WAS AN ERROR";
         }
         progressBar.setVisibility(View.GONE);
-        Log.i("INFO", response);
-        responseView.setText(response);
+        Log.i("INFO", jsonString);
+        if (jsonString != null) {
+            try {
+                JSONObject jsonObj = new JSONObject(jsonString);
+                String commentText =jsonObj.getString("comment");
+                responseView.setText(commentText);
+            } catch (final JSONException e) {
+
+                String TAG = "JSONDebugging";
+                Log.e(TAG, "Json parsing error: " + e.getMessage());
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Toast.makeText(getApplicationContext(),
+                                "Json parsing error: " + e.getMessage(),
+                                Toast.LENGTH_LONG)
+                                .show();
+                    }
+                });
+
+            }
+
+
     }
-}
+}}}
